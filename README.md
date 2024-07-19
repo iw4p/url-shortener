@@ -9,6 +9,7 @@ Analytics MicroService: Collects and analyzes data from the web servers.
 Database: Stores the application's data.
 Cache Database: Stores frequently accessed data for faster retrieval.
 
+```mermaid
 graph TD
 A[Client] --> B[Load Balancer]
 B --> C[Web Servers]
@@ -16,6 +17,7 @@ C --> D[Database]
 C --> E[Cache Database]
 C --> F[Analytics MicroService]
 B --> A
+```
 
 The Client sends a request to the Load Balancer.
 The Load Balancer distributes the request to one of the Web Servers.
