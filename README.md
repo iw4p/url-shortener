@@ -1,6 +1,6 @@
 # url-shortener
 
-System Design URL Shortener in Golang
+## System Design URL Shortener in Golang
 
 Client: Users accessing the web application.
 Load Balancer: Distributes incoming traffic across multiple web servers.
@@ -26,8 +26,14 @@ The Web Servers can also read from or write to the Cache Database to improve per
 The Web Servers send relevant data to the Analytics MicroService for analysis.
 The Web Servers return the response to the Client via the Load Balancer.
 
-Client ⟶ Load Balancer ⟶ Web Servers
-Web Servers ⟶ Database
-Web Servers ⟶ Cache Database
-Web Servers ⟶ Analytics MicroService
-Load Balancer ⟶ Client (response)
+## Entities
+
+### URL
+
+ID - int
+original url - string
+shortened url - string
+
+## Database
+
+### MongoDB
