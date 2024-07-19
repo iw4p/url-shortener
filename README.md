@@ -20,10 +20,15 @@ B --> A
 ```
 
 The Client sends a request to the Load Balancer.
+
 The Load Balancer distributes the request to one of the Web Servers.
+
 The Web Servers process the request, which may involve reading from or writing to the Database.
+
 The Web Servers can also read from or write to the Cache Database to improve performance.
+
 The Web Servers send relevant data to the Analytics MicroService for analysis.
+
 The Web Servers return the response to the Client via the Load Balancer.
 
 ## Entities
@@ -31,7 +36,9 @@ The Web Servers return the response to the Client via the Load Balancer.
 ### URL
 
 ID - int
+
 original url - string
+
 shortened url - string
 
 ## Database
