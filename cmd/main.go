@@ -1,18 +1,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
-	"github.com/iw4p/url-shortener/utils"
+	"github.com/iw4p/url-shortener/db"
+	"github.com/iw4p/url-shortener/repository"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Response struct {
@@ -42,28 +38,23 @@ func shortURL(c echo.Context) error {
 
 func main() {
 
-	environmentVariables := utils.ReturnEnv()
+	mongoDB := db.MongoDB{}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(environmentVariables.Mongo_url))
+	ctx, collection, err := mongoDB.InitMongoDB("urls")
 	if err != nil {
-		panic("can not connect to the DB")
+		log.Fatalf("Failed to initialize MongoDB: %v", err)
 	}
 
-	collection := client.Database(environmentVariables.Db_name).Collection(environmentVariables.Collection)
-
-	fmt.Println(collection.Indexes())
-
 	// Query the collection using the indexed field
-	doc, err := getDataByID(ctx, collection, "1231231ww2")
+	doc, err := repository.GetDataByID(ctx, collection, "1231231ww2")
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	fmt.Printf("Found document: %+v\n", doc)
 
 	// Insert a document
-	docID, err := insertDocument(ctx, collection)
+	docID, err := repository.InsertDocument(ctx, collection)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -80,30 +71,4 @@ func main() {
 	v1.POST("/short", shortURL)
 
 	e.Logger.Fatal(e.Start(":8080"))
-}
-
-func insertDocument(ctx context.Context, collection *mongo.Collection) (interface{}, error) {
-	res, err := collection.InsertOne(ctx, bson.D{
-		{"short", "1231231ww22"},
-		{"original", "https://google.com"},
-	})
-	if err != nil {
-		return nil, err
-	}
-	return res.InsertedID, nil
-}
-
-func getDataByID(ctx context.Context, collection *mongo.Collection, short string) (bson.M, error) {
-	filter := bson.D{{"short", short}}
-
-	var result bson.M
-	err := collection.FindOne(ctx, filter).Decode(&result)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, fmt.Errorf("no document found with the given id")
-		}
-		return nil, err
-	}
-
-	return result, nil
 }
