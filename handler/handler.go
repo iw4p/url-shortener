@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/iw4p/url-shortener/internal/service"
@@ -22,6 +21,11 @@ type Response struct {
 }
 
 type URLRequest struct {
+	Short    string `json:"short"`
+	Original string `json:"original"`
+}
+
+type URLResponse struct {
 	Short    string `json:"short"`
 	Original string `json:"original"`
 }
@@ -54,14 +58,7 @@ func (h *Handler) Redirect(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, Response{OK: false, Message: "Failed to retrieve original URL"})
 	}
 
-	originalURL, ok := originalData["original"].(string)
-	fmt.Println("originalURL, originalData")
-	fmt.Println(originalURL, originalData)
-	if !ok {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to retrieve the original URL")
-	}
-
-	return c.Redirect(http.StatusMovedPermanently, originalURL)
+	return c.Redirect(http.StatusMovedPermanently, originalData.Original)
 }
 
 func (h *Handler) GetOriginalURL(c echo.Context) error {
@@ -73,5 +70,10 @@ func (h *Handler) GetOriginalURL(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, Response{OK: false, Message: "Failed to retrieve original URL"})
 	}
-	return c.JSON(http.StatusOK, originalURL)
+
+	res := &URLResponse{
+		Original: originalURL.Original,
+		Short:    req.Short,
+	}
+	return c.JSON(http.StatusOK, res)
 }

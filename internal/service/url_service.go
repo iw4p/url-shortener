@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/iw4p/url-shortener/base62"
+	"github.com/iw4p/url-shortener/internal/repository"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -17,9 +19,14 @@ type URLRequest struct {
 	Original string `json:"original"`
 }
 
+type URLResponse struct {
+	Short    string `json:"short"`
+	Original string `json:"original"`
+}
+
 type URLRepository interface {
 	GetLastShortValue(ctx context.Context) (int64, error)
-	InsertDocument(ctx context.Context, data bson.D) (interface{}, error)
+	InsertDocument(ctx context.Context, data bson.D) (*repository.Document, error)
 	GetDocument(ctx context.Context, filter bson.D) (bson.M, error)
 }
 
@@ -43,12 +50,44 @@ func (s *URLService) GetShorten(ctx context.Context, original string) (interface
 	shortValue := base62.Base62{}.EncodeBase62(nextSeq)
 
 	data := bson.D{{"short_id", nextSeq}, {"short", shortValue}, {"original", original}, {"createdAt", time.Now()}}
-	return s.repo.InsertDocument(ctx, data)
+	result, err := s.repo.InsertDocument(ctx, data)
+	if err != nil {
+		return nil, fmt.Errorf(err.Error())
+	}
+
+	urlResponse := URLResponse{
+		Short:    result.Short,
+		Original: result.Original,
+	}
+
+	return urlResponse, nil
 }
 
-func (s *URLService) GetOriginal(ctx context.Context, short string) (bson.M, error) {
+func (s *URLService) GetOriginal(ctx context.Context, short string) (*repository.Document, error) {
 
 	b := base62.Base62{}.DecodeBase62(short)
 	filter := bson.D{{"short_id", b}}
-	return s.repo.GetDocument(ctx, filter)
+	result, err := s.repo.GetDocument(ctx, filter)
+
+	if err != nil {
+		return nil, fmt.Errorf(err.Error())
+	}
+
+	short, ok := result["short"].(string)
+	if !ok {
+		return nil, fmt.Errorf("short id not found or not an int32")
+	}
+
+	original, ok := result["original"].(string)
+
+	if !ok || original == "" {
+		return nil, fmt.Errorf("url is not available")
+	}
+
+	urlResponse := repository.Document{
+		Short:    short,
+		Original: original,
+	}
+
+	return &urlResponse, nil
 }
