@@ -44,3 +44,5 @@ shortened url - string
 ## Database
 
 ### MongoDB
+
+Set "short" as an index to find document more optimized and faster.
