@@ -37,18 +37,32 @@ func (m *MongoDB) Init(collectionName string) (context.Context, *mongo.Collectio
 	m.client = client
 	collection := client.Database(env.DbName).Collection(collectionName)
 
-	mod := mongo.IndexModel{
+	// Create unique index on short_id
+	uniqueIndexModel := mongo.IndexModel{
 		Keys: bson.M{
 			"short_id": 1,
 		},
 		Options: options.Index().SetUnique(true),
 	}
 
-	ind, err := collection.Indexes().CreateOne(ctx, mod)
+	// Create TTL index on createdAt
+	ttlIndexModel := mongo.IndexModel{
+		Keys: bson.M{
+			"createdAt": 1,
+		},
+		Options: options.Index().SetExpireAfterSeconds(157_800_000), // Remove each URL records which passed 5 Years (157,800,000 seconds)
+	}
+
+	_, err = collection.Indexes().CreateOne(ctx, uniqueIndexModel)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Indexes().CreateOne() ERROR:%w", err)
-	} else {
-		fmt.Println("CreateOne() index:", ind)
+		fmt.Println("Indexes().CreateOne() ERROR:", err)
+		return nil, nil, err
+	}
+
+	_, err = collection.Indexes().CreateOne(ctx, ttlIndexModel)
+	if err != nil {
+		fmt.Println("Indexes().CreateOne() ERROR:", err)
+		return nil, nil, err
 	}
 
 	return ctx, collection, nil

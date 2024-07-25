@@ -45,4 +45,5 @@ shortened url - string
 
 ### MongoDB
 
-Set "short" as an index to find document more optimized and faster.
+Set "short_id" as an index to find document more optimized and faster.
+Set ".SetExpireAfterSeconds(3600)" to have shorted urls in mongodb for only 1 hour

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/iw4p/url-shortener/base62"
 	"go.mongodb.org/mongo-driver/bson"
@@ -41,7 +42,7 @@ func (s *URLService) GetShorten(ctx context.Context, original string) (interface
 	}
 	shortValue := base62.Base62{}.EncodeBase62(nextSeq)
 
-	data := bson.D{{"short_id", nextSeq}, {"short", shortValue}, {"original", original}}
+	data := bson.D{{"short_id", nextSeq}, {"short", shortValue}, {"original", original}, {"createdAt", time.Now()}}
 	return s.repo.InsertDocument(ctx, data)
 }
 
